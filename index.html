@@ -77,22 +77,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         let finalBytes = bytes;
         if (entry.compressed) {
           if (typeof DecompressionStream !== 'undefined') {
-            const ds = new DecompressionStream('gzip');
-            const writer = ds.writable.getWriter();
-            const reader = ds.readable.getReader();
-            writer.write(bytes);
-            writer.close();
-            const chunks = [];
-            let totalLen = 0;
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              chunks.push(value);
-              totalLen += value.length;
-            }
-            finalBytes = new Uint8Array(totalLen);
-            let offset = 0;
-            for (const chunk of chunks) { finalBytes.set(chunk, offset); offset += chunk.length; }
+            const decompressedResponse = new Response(
+              new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))
+            );
+            finalBytes = new Uint8Array(await decompressedResponse.arrayBuffer());
           } else {
             console.warn('DecompressionStream not available, asset ' + uuid + ' may not render');
           }
