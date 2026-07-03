@@ -42,6 +42,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // Error sink persists across replaceWith since it's on window, not the DOM.
   window.addEventListener('error', function(e) {
+    // Erros "Script error." sem arquivo/linha vêm de scripts de outra
+    // origem (ex.: a sincronização em tempo real com a planilha, que usa
+    // uma tag <script> apontando para script.google.com). O navegador
+    // oculta os detalhes desses erros por segurança quando o script é de
+    // outra origem. São falhas passageiras de rede/atualização (não bugs
+    // do aplicativo) e a próxima tentativa automática, minutos depois,
+    // normalmente resolve sozinha — por isso não mostramos o aviso aqui.
+    if ((e.message === 'Script error.' || e.message === 'Script error') && !e.filename) {
+      return;
+    }
     var p = document.body || document.documentElement;
     var d = document.getElementById('__bundler_err') || p.appendChild(document.createElement('div'));
     d.id = '__bundler_err';
